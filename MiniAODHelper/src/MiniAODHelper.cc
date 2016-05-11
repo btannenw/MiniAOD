@@ -135,11 +135,18 @@ void MiniAODHelper::SetJetCorrector(const JetCorrector* iCorrector){
 }
 
 // Set up parameters one by one
-void MiniAODHelper::SetJetCorrectorUncertainty(){
 
-  std::string inputJECfile = ( isData ) ? string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer15_25nsV6_DATA_Uncertainty_AK4PFchs.txt" : string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer15_25nsV6_MC_Uncertainty_AK4PFchs.txt";
+void MiniAODHelper::SetJetCorrectorUncertainty( std::string JetName ){
 
+  if( JetName == "PUPPI" ){
+    std::cout << "[MiniAODHelper::SetJetCorrectorUncertainty] JetCorrectionUncertainty : prepare for PUPPI jets instead of CHS jets." << std::endl;
+    std::string inputJECfile = string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Fall15_25nsV2_MC_Uncertainty_AK4PFPuppi.txt";
+    jecUnc_ = new JetCorrectionUncertainty(inputJECfile);
+  }else{
+  // By default, parameters for CHS jet is applied.
+  std::string inputJECfile = string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Fall15_25nsV2_MC_Uncertainty_AK4PFchs.txt";
   jecUnc_ = new JetCorrectionUncertainty(inputJECfile);
+  }
 
 }
 
