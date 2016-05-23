@@ -20,6 +20,7 @@ MiniAODHelper::MiniAODHelper(){
 
   samplename = "blank";
 
+  muoniso_PuppiCombined = 0 ;
 }
 
 // Destructor
@@ -170,14 +171,15 @@ void MiniAODHelper::SetFactorizedJetCorrector(){
 
 
 std::vector<pat::Muon> 
-MiniAODHelper::GetSelectedMuons(const std::vector<pat::Muon>& inputMuons, const float iMinPt, const muonID::muonID iMuonID, const coneSize::coneSize iconeSize, const corrType::corrType icorrType, const float iMaxEta){
+MiniAODHelper::GetSelectedMuons(edm::Handle<edm::View<pat::Muon> > inputMuons, const float iMinPt, const muonID::muonID iMuonID, const coneSize::coneSize iconeSize, const corrType::corrType icorrType, const float iMaxEta){
 
   CheckSetUp();
 
   std::vector<pat::Muon> selectedMuons;
 
-  for( std::vector<pat::Muon>::const_iterator it = inputMuons.begin(), ed = inputMuons.end(); it != ed; ++it ){
-    if( isGoodMuon(*it,iMinPt,iMaxEta,iMuonID,iconeSize,icorrType) ) selectedMuons.push_back(*it);
+  for( unsigned int idx = 0 ; idx < inputMuons -> size() ; idx ++ ) {
+    edm::Ptr<pat::Muon> muPtr = inputMuons->ptrAt( idx ) ;
+    if( isGoodMuon( muPtr ,iMinPt,iMaxEta,iMuonID,iconeSize,icorrType) ) selectedMuons.push_back( *muPtr );
   }
 
   return selectedMuons;
@@ -463,7 +465,9 @@ bool MiniAODHelper::passesMuonPOGIdTight(const pat::Muon& iMuon){
 }
 
 bool 
-MiniAODHelper::isGoodMuon(const pat::Muon& iMuon, const float iMinPt, const float iMaxEta, const muonID::muonID iMuonID, const coneSize::coneSize iconeSize, const corrType::corrType icorrType){
+MiniAODHelper::isGoodMuon( const edm::Ptr<pat::Muon> muonPtr, const float iMinPt, const float iMaxEta, const muonID::muonID iMuonID, const coneSize::coneSize iconeSize, const corrType::corrType icorrType){
+
+  pat::Muon iMuon = *muonPtr ;
 
   CheckVertexSetUp();
 
@@ -525,7 +529,7 @@ MiniAODHelper::isGoodMuon(const pat::Muon& iMuon, const float iMinPt, const floa
   case muonID::muon2lss:
   case muonID::muonLoose:
     passesKinematics = ((iMuon.pt() >= minMuonPt) && (fabs(iMuon.eta()) <= maxMuonEta));
-    passesIso        = (GetMuonRelIso(iMuon,iconeSize,icorrType) < 0.200);
+    passesIso        = (GetMuonRelIso( muonPtr,iconeSize,icorrType) < 0.200);
     isPFMuon         = iMuon.isPFMuon();
     
     if( iMuon.globalTrack().isAvailable() ){
@@ -550,12 +554,22 @@ MiniAODHelper::isGoodMuon(const pat::Muon& iMuon, const float iMinPt, const floa
     break;
   case muonID::muonTight:
       passesKinematics = ((iMuon.pt() >= minMuonPt) && (fabs(iMuon.eta()) <= maxMuonEta));
-      passesIso        = (GetMuonRelIso(iMuon,iconeSize,icorrType) < 0.15);
+      passesIso        = (GetMuonRelIso(muonPtr,iconeSize,icorrType) < 0.15);
       passesID         = passesMuonPOGIdTight(iMuon);
       break;
   case muonID::muonTightDL:
       passesKinematics = ((iMuon.pt() >= minMuonPt) && (fabs(iMuon.eta()) <= maxMuonEta));
-      passesIso        = (GetMuonRelIso(iMuon,iconeSize,icorrType) < 0.25);
+      passesIso        = (GetMuonRelIso(muonPtr,iconeSize,icorrType) < 0.25);
+      passesID         = passesMuonPOGIdTight(iMuon);
+      break;
+  case muonID::muonTightPUPPIIso:
+      passesKinematics = ((iMuon.pt() >= minMuonPt) && (fabs(iMuon.eta()) <= maxMuonEta));
+      passesIso        = (GetMuonRelIso(muonPtr,iconeSize,icorrType) < 0.1893); // PUPPI isolation threshold tight.
+      passesID         = passesMuonPOGIdTight(iMuon);
+      break;
+  case muonID::muonTightDLPUPPIIso:
+      passesKinematics = ((iMuon.pt() >= minMuonPt) && (fabs(iMuon.eta()) <= maxMuonEta));
+      passesIso        = (GetMuonRelIso(muonPtr,iconeSize,icorrType) < 0.2985); // PUPPI isolation threshold loose
       passesID         = passesMuonPOGIdTight(iMuon);
       break;
 
@@ -839,8 +853,7 @@ float MiniAODHelper::GetMuonRelIso(const pat::Muon& iMuon) const
   return result;
 }
 
-//overloaded
-float MiniAODHelper::GetMuonRelIso(const pat::Muon& iMuon,const coneSize::coneSize iconeSize, const corrType::corrType icorrType, std::map<std::string,double> miniIso_calculation_params) const
+float MiniAODHelper::GetMuonRelIso(const edm::Ptr<pat::Muon> muonPtr, const coneSize::coneSize iconeSize, const corrType::corrType icorrType, std::map<std::string,double> miniIso_calculation_params) const
 {
   
   // !!! NOTE !!! rho used with Phys14 should be: fixedGridRhoFastjetAll
@@ -848,6 +861,8 @@ float MiniAODHelper::GetMuonRelIso(const pat::Muon& iMuon,const coneSize::coneSi
   
   float result = 9999; 
   
+  pat::Muon iMuon = * muonPtr ;
+
   double correction = 9999.;
   double EffArea = 9999.;
   double Eta = abs(iMuon.eta());
@@ -916,6 +931,7 @@ float MiniAODHelper::GetMuonRelIso(const pat::Muon& iMuon,const coneSize::coneSi
       break;
 
     case coneSize::miniIso:
+      {
       double miniIsoR = 10.0/min(max(float(iMuon.pt()), float(50.)),float(200.));
       pfIsoCharged = isoSumRaw(charged_, iMuon, miniIsoR, 0.0001, 0.0, SelfVetoPolicy::selfVetoAll);
       pfIsoNeutral = isoSumRaw(neutral_, iMuon, miniIsoR, 0.01, 0.5, SelfVetoPolicy::selfVetoAll);
@@ -955,19 +971,24 @@ float MiniAODHelper::GetMuonRelIso(const pat::Muon& iMuon,const coneSize::coneSi
       miniIso_calculation_params["miniIsoR"] = miniIsoR;
       miniIso_calculation_params["miniAbsIsoNeutralcorr"] = pfIsoPUSubtracted; 
       break;
-      
+      }
+    case coneSize::PUPPICombined :
+      {
+	result = (**muoniso_PuppiCombined)[ muonPtr];
+	break ; 
+      }
     }
   return result;
 }
 
 void MiniAODHelper::AddMuonRelIso(pat::Muon& iMuon,const coneSize::coneSize iconeSize, const corrType::corrType icorrType, std::string userFloatName) const{
-  float iso=GetMuonRelIso(iMuon,iconeSize,icorrType);
-  iMuon.addUserFloat(userFloatName,iso);
+  //  float iso=GetMuonRelIso(iMuon,iconeSize,icorrType);
+  //  iMuon -> addUserFloat(userFloatName,iso);
 }
 
 void MiniAODHelper::AddMuonRelIso(std::vector<pat::Muon>& muons,const coneSize::coneSize iconeSize, const corrType::corrType icorrType, std::string userFloatName) const{
   for(auto mu=muons.begin(); mu!=muons.end(); mu++){
-    AddMuonRelIso(*mu,iconeSize,icorrType,userFloatName);
+    //    AddMuonRelIso(*mu,iconeSize,icorrType,userFloatName);
   }
 }
 
@@ -1004,6 +1025,8 @@ float MiniAODHelper::GetElectronRelIso(const pat::Electron& iElectron,const cone
   
   switch(iconeSize)
     {
+    case coneSize::PUPPICombined:
+      // PUPPI iolation for electon to be implemented.
     case coneSize::R04:
     case coneSize::R03:
       pfIsoCharged = iElectron.pfIsolationVariables().sumChargedHadronPt;
@@ -2139,3 +2162,7 @@ std::vector<pat::MET> MiniAODHelper::CorrectMET(const std::vector<pat::Jet>& old
 
 }
 
+
+void MiniAODHelper::setPUPPIMuonIsolationValueMap( edm::Handle< edm::ValueMap<double> > * puppiMuonIsoValueMap ){
+  muoniso_PuppiCombined = puppiMuonIsoValueMap ; 
+}

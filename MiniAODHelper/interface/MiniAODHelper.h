@@ -93,6 +93,7 @@ namespace muonID{
       muonPtOnly, muonPtEtaOnly, muonPtEtaIsoOnly, muonPtEtaIsoTrackerOnly,
       muonRaw,
       muonLooseCutBased, muonTightCutBased, muonCutBased, muonLooseMvaBased, muonTightMvaBased,
+      muonTightPUPPIIso , muonTightDLPUPPIIso ,
       muon2lss
    };
 }
@@ -112,7 +113,7 @@ namespace electronID{
    };
 }
 namespace hdecayType{	enum hdecayType{ hbb, hcc, hww, hzz, htt, hgg, hjj, hzg }; }
-namespace coneSize{ enum coneSize{miniIso,R03,R04};}
+namespace coneSize{ enum coneSize{miniIso,R03,R04,PUPPICombined};}
 namespace corrType{ enum corrType{deltaBeta,rhoEA};}
 namespace effAreaType{ enum effAreaType{spring15,phys14};}
 
@@ -142,7 +143,7 @@ class MiniAODHelper{
   void SetFactorizedJetCorrector();
   void SetPackedCandidates(const std::vector<pat::PackedCandidate> & all, int fromPV_thresh=1, float dz_thresh=9999., bool also_leptons=false);
 
-  virtual std::vector<pat::Muon> GetSelectedMuons(const std::vector<pat::Muon>&, const float, const muonID::muonID, const coneSize::coneSize = coneSize::R04, const corrType::corrType = corrType::deltaBeta, const float = 2.4);
+  virtual std::vector<pat::Muon> GetSelectedMuons(edm::Handle<edm::View<pat::Muon>>, const float, const muonID::muonID, const coneSize::coneSize = coneSize::R04, const corrType::corrType = corrType::deltaBeta, const float = 2.4);
   virtual std::vector<pat::Electron> GetSelectedElectrons(const std::vector<pat::Electron>&, const float, const electronID::electronID, const float = 2.4);
   std::vector<pat::Tau> GetSelectedTaus(const std::vector<pat::Tau>&, const float, const tau::ID);
   std::vector<pat::Jet> GetSelectedJets(const std::vector<pat::Jet>&, const float, const float, const jetID::jetID, const char);
@@ -152,13 +153,13 @@ class MiniAODHelper{
   std::vector<pat::Jet> GetCorrectedJets(const std::vector<pat::Jet>&, const sysType::sysType iSysType=sysType::NA);
   std::vector<boosted::BoostedJet> GetSelectedBoostedJets(const std::vector<boosted::BoostedJet>&, const float, const float, const float, const float, const jetID::jetID);
   bool passesMuonPOGIdTight(const pat::Muon&);
-  bool isGoodMuon(const pat::Muon&, const float, const float, const muonID::muonID, const coneSize::coneSize, const corrType::corrType);
+  bool isGoodMuon(const edm::Ptr<pat::Muon> muonPtr, const float, const float, const muonID::muonID, const coneSize::coneSize, const corrType::corrType);
   bool isGoodElectron(const pat::Electron& iElectron, const float iMinPt, const float iMaxEta,const electronID::electronID iElectronID);
   bool isGoodTau(const pat::Tau&, const float, const tau::ID);
   bool isGoodJet(const pat::Jet&, const float, const float, const jetID::jetID, const char);
   //  virtual float GetMuonRelIso(const pat::Muon&) const;
   float GetMuonRelIso(const pat::Muon&) const;
-  float GetMuonRelIso(const pat::Muon&, const coneSize::coneSize, const corrType::corrType, std::map<std::string,double> miniIso_calculation_params = {}) const;
+  float GetMuonRelIso(const edm::Ptr<pat::Muon> muonPtr, const coneSize::coneSize, const corrType::corrType, std::map<std::string,double> miniIso_calculation_params = {}) const;
   void AddMuonRelIso(pat::Muon&,const coneSize::coneSize, const corrType::corrType,std::string userFloatName="relIso") const;
   void AddMuonRelIso(std::vector<pat::Muon>&,const coneSize::coneSize, const corrType::corrType,std::string userFloatName="relIso") const;
   float GetElectronRelIso(const pat::Electron&) const;
@@ -207,6 +208,8 @@ class MiniAODHelper{
   template <typename T, typename S> double DeltaR( const S&, const T& );
   template <typename T, typename S> std::vector<T> GetDifference( const std::vector<S>&, const std::vector<T>& );
   template <typename T, typename S> std::vector<T> GetUnion( const std::vector<S>&, const std::vector<T>& );
+
+  void setPUPPIMuonIsolationValueMap( edm::Handle< edm::ValueMap<double> > * puppiMuonIsoValueMap );
 
  protected:
   
@@ -264,7 +267,8 @@ class MiniAODHelper{
     }
 
   }; // end structure .
-
+  
+  edm::Handle< edm::ValueMap<double> > * muoniso_PuppiCombined ;
   
   void FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
 				      struct _topquarkdecayobjects * topdecayobjects) ;

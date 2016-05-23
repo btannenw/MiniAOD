@@ -93,7 +93,7 @@ class MiniAODAnalyzer : public edm::EDAnalyzer {
 
   edm::EDGetTokenT <reco::VertexCollection> vertexToken;
   edm::EDGetTokenT <pat::ElectronCollection> electronToken;
-  edm::EDGetTokenT <pat::MuonCollection> muonToken;
+  edm::EDGetTokenT <edm::View<pat::Muon> > muonToken;
   edm::EDGetTokenT <pat::JetCollection> ak4jetToken;
   edm::EDGetTokenT <edm::View<pat::Jet> > ak8jetToken;
   edm::EDGetTokenT <reco::BeamSpot> beamspotToken;
@@ -215,7 +215,7 @@ MiniAODAnalyzer::MiniAODAnalyzer(const edm::ParameterSet& iConfig)
 
   vertexToken = consumes <reco::VertexCollection> (edm::InputTag(std::string("offlineSlimmedPrimaryVertices")));
   electronToken = consumes <pat::ElectronCollection> (edm::InputTag(std::string("slimmedElectrons")));
-  muonToken = consumes <pat::MuonCollection> (edm::InputTag(std::string("slimmedMuons")));
+  muonToken = consumes <edm::View<pat::Muon> > (edm::InputTag(std::string("slimmedMuons")));
   ak4jetToken = consumes <pat::JetCollection> (edm::InputTag(std::string("slimmedJets")));
   ak8jetToken = consumes <edm::View<pat::Jet> > (edm::InputTag(std::string("slimmedJetsAK8")));
   beamspotToken = consumes <reco::BeamSpot> (edm::InputTag(std::string("offlineBeamSpot")));
@@ -425,7 +425,7 @@ MiniAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
   edm::Handle<pat::ElectronCollection> pfelectrons;
   iEvent.getByToken(electronToken,pfelectrons);
 
-  edm::Handle<pat::MuonCollection> pfmuons;
+  edm::Handle<edm::View<pat::Muon> > pfmuons;
   iEvent.getByToken(muonToken,pfmuons);
 
   edm::Handle<pat::JetCollection> pfjets;
@@ -518,9 +518,11 @@ MiniAODAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup
 
   std::vector<pat::Muon> selectedMuons;
   if( pfmuons.isValid() ){
-    selectedMuons = miniAODhelper.GetSelectedMuons(*pfmuons, 30., muonID::muonTight);
+    selectedMuons = miniAODhelper.GetSelectedMuons( pfmuons, 30., muonID::muonTight);
 
-    for( std::vector<pat::Muon>::const_iterator pfmu = pfmuons->begin(); pfmu!=pfmuons->end(); ++pfmu ){
+    for( unsigned int idx = 0 ; idx < pfmuons -> size () ; idx++ ){
+      
+      const edm::Ptr<pat::Muon> pfmu = pfmuons->ptrAt( idx ) ;
       int ncut = 0;
       h_muon_selection->Fill(0.5+ncut++, 1);
 
