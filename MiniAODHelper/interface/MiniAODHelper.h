@@ -58,7 +58,7 @@
 
 #include "DataFormats/Math/interface/LorentzVector.h"
 
-#include "JetMETCorrections/Objects/interface/JetCorrector.h"
+#include "JetMETCorrections/JetCorrector/interface/JetCorrector.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/FactorizedJetCorrector.h"
@@ -147,8 +147,8 @@ class MiniAODHelper{
   void SetVertex(const reco::Vertex&);
   void SetRho(double);
   void UseCorrectedJets() { use_corrected_jets = true; };
-  void SetJetCorrector(const JetCorrector*);
-  void SetBoostedJetCorrector(const JetCorrector*);
+  void SetJetCorrector(const reco::JetCorrector*);
+  void SetBoostedJetCorrector(const reco::JetCorrector*);
 
   void UpdateJetCorrectorUncertainties(const edm::EventSetup& iSetup);
 
@@ -267,8 +267,8 @@ class MiniAODHelper{
   std::vector<const reco::Candidate *> vetos_;
   reco::Vertex vertex;
 
-  const JetCorrector* corrector = 0;
-  const JetCorrector* ak8corrector = 0;
+  const reco::JetCorrector* corrector = 0;
+  const reco::JetCorrector* ak8corrector = 0;
   FactorizedJetCorrector* useJetCorrector;
   //  std::unique_ptr<JetCorrectionUncertainty> jecUnc_;
   std::map< std::string, std::unique_ptr<JetCorrectionUncertainty> > jecUncertainties_;

@@ -190,13 +190,13 @@ std::vector<pat::PackedCandidate> MiniAODHelper::GetPackedCandidates(void){
 }
 
 // Set up parameters one by one
-void MiniAODHelper::SetJetCorrector(const JetCorrector* iCorrector){
+void MiniAODHelper::SetJetCorrector(const reco::JetCorrector* iCorrector){
   corrector = iCorrector;
 }
 
 
 // Set up parameters one by one
-void MiniAODHelper::SetBoostedJetCorrector(const JetCorrector* iCorrector){
+void MiniAODHelper::SetBoostedJetCorrector(const reco::JetCorrector* iCorrector){
   ak8corrector = iCorrector;
 }
 
@@ -464,7 +464,7 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
     if( doJES ){
       double scale = 1.;
       if (corrector) {
-	scale = corrector->correction(jet, event, setup);
+	scale = corrector->correction(jet);
       } else if (!use_corrected_jets) {
 	edm::LogError("MiniAODHelper") << "Trying to use Full Framework GetCorrectedJets without setting jet corrector!";
       }
@@ -524,7 +524,7 @@ MiniAODHelper::GetCorrectedAK8Jet(const pat::Jet& inputJet, const edm::Event& ev
     double scale = 1.;
 
     if (corrector) {
-       scale = ak8corrector->correction(outputJet, event, setup);
+      scale = ak8corrector->correction(outputJet );
     } else {
        edm::LogError("MiniAODHelper") << "Trying to use Full Framework GetCorrectedJets without setting jet corrector!";
     }
@@ -592,7 +592,7 @@ MiniAODHelper::GetAK8JetCorrectionFactor(const pat::Jet& inputJet, const edm::Ev
     double scale = 1.;
 
     if (ak8corrector) {
-       scale = ak8corrector->correction(outputJet, event, setup);
+      scale = ak8corrector->correction(outputJet);
     } else {
        edm::LogError("MiniAODHelper") << "Trying to use Full Framework GetCorrectedJets without setting jet corrector!";
     }
