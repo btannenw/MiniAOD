@@ -248,6 +248,32 @@ class MiniAODHelper{
   template <typename T, typename S> std::vector<T> GetDifference( const std::vector<S>&, const std::vector<T>& );
   template <typename T, typename S> std::vector<T> GetUnion( const std::vector<S>&, const std::vector<T>& );
 
+  struct _topquarkdecayobjects {
+    const reco::Candidate * top ;
+    const reco::Candidate * bottom ;
+    const reco::Candidate * W ;
+    const reco::Candidate * WChild_up;
+    const reco::Candidate * WChild_down;
+    bool isWChild_tau ;
+    const reco::Candidate * Tau_Neu ;
+    std::vector< const reco::Candidate *> TauChildren ;
+
+    bool isLeptonicDecay(){
+      return
+	abs( WChild_down->pdgId() ) == 11
+	||
+	abs( WChild_down->pdgId() ) == 13
+	||
+	isWChild_tau ;
+    }
+
+  }; // end structure .
+
+  static void FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
+				      struct _topquarkdecayobjects * topdecayobjects) ;
+
+  static const reco::Candidate * GetObjectJustBeforeDecay( const reco::Candidate * particle );
+
  protected:
 
   bool isSetUp;
@@ -284,29 +310,7 @@ class MiniAODHelper{
   inline void CheckSetUp() const { if(!isSetUp){ ThrowFatalError("MiniAODHelper not yet set up."); } };
   inline void CheckVertexSetUp() const { if(!vertexIsSet){ ThrowFatalError("Vertex is not set."); } };
 
-
  private :
-
-  struct _topquarkdecayobjects {
-    const reco::Candidate * top ;
-    const reco::Candidate * bottom ;
-    const reco::Candidate * W ;
-    const reco::Candidate * WChild_up;
-    const reco::Candidate * WChild_down;
-    bool isWChild_tau ;
-    const reco::Candidate * Tau_Neu ;
-    std::vector< const reco::Candidate *> TauChildren ;
-
-    bool isLeptonicDecay(){
-      return
-	abs( WChild_down->pdgId() ) == 11
-	||
-	abs( WChild_down->pdgId() ) == 13
-	||
-	isWChild_tau ;
-    }
-
-  }; // end structure .
 
   void ApplyJetEnergyCorrection(pat::Jet& jet,
 				double& totalCorrFactor,
@@ -330,12 +334,7 @@ class MiniAODHelper{
 
 
 
-  void FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
-				      struct _topquarkdecayobjects * topdecayobjects) ;
-
   bool checkIfRegisterd( const reco::Candidate * candidate , std::vector< const reco::Candidate * > list );
-
-  const reco::Candidate * GetObjectJustBeforeDecay( const reco::Candidate * particle );
 
   std::vector<double>    JER_etaMin;
   std::vector<double>    JER_etaMax;
