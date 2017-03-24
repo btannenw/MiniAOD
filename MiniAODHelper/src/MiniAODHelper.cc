@@ -1728,8 +1728,8 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       dPhiIn < 0.0816 &&
 	       hOverE < 0.0414 &&
 	       ooEmooP < 0.0129 &&
-// 	       d0 < 0.035904 &&
-// 	       dZ < 0.075496 &&
+ 	       d0 < 0.05 &&
+ 	       dZ < 0.10 &&
 	       expectedMissingInnerHits <= 1 &&
 	       passConversionVeto &&
 	       relIso < 0.0588
@@ -1741,8 +1741,8 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       dPhiIn < 0.0394 &&
 	       hOverE < 0.0641 &&
 	       ooEmooP < 0.0129 &&
-// 	       d0 < 0.035904 &&
-// 	       dZ < 0.075496 &&
+ 	       d0 < 0.10 &&
+ 	       dZ < 0.20 &&
 	       expectedMissingInnerHits <= 1 &&
 	       passConversionVeto &&
 	       relIso < 0.0571
@@ -1758,6 +1758,8 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       ooEmooP < 0.299 &&
 	       expectedMissingInnerHits <= 2 &&
 	       passConversionVeto &&
+ 	       d0 < 0.05 &&
+ 	       dZ < 0.10 &&
 	       relIso < 0.175
 	       );
     }
@@ -1769,6 +1771,8 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       ooEmooP < 0.15 &&
 	       expectedMissingInnerHits <= 3 &&
 	       passConversionVeto &&
+ 	       d0 < 0.10 &&
+ 	       dZ < 0.20 &&
 	       relIso < 0.159
 	       );
     }
