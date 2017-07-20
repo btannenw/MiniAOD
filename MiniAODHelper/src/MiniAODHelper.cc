@@ -29,7 +29,7 @@ MiniAODHelper::MiniAODHelper()
 
   { //  JER preparation
 
-    std::string JER_file =  string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV6_MC_PtResolution_AK4PFchs.txt" ;
+    std::string JER_file =  string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt" ;
     std::ifstream infile( JER_file);
     if( ! infile ){
       std::cerr << "Error: cannot open file(" << JER_file << ")" << endl;
@@ -85,9 +85,15 @@ MiniAODHelper::~MiniAODHelper(){
 
 void MiniAODHelper::SetJER_SF_Tool(const edm::EventSetup& iSetup){
 
-  // Accessing from Global Tag
-  JER_ak4_resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
-  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor::get(iSetup, "AK4PFchs");
+//  // Accessing from Global Tag
+//  JER_ak4_resolution = JME::JetResolution::get(iSetup, "AK4PFchs_pt");
+//  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor::get(iSetup, "AK4PFchs");
+//
+
+  JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt"  );
+  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_SF_AK4PFchs.txt" );
+
+
 
 }
 
@@ -506,16 +512,24 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
       // - - -
       double rescaleFactor = 0.0 ; 
 
-      JME::JetParameters jer_param = { {JME::Binning::JetEta, jet.eta()} } ;
+      //      JME::JetParameters jer_param = { {JME::Binning::JetEta, jet.eta()}, {JME::Binning::Rho, useRho} } ;
+      JME::JetParameters parameter;
+      parameter.setJetPt(jet.pt());
+      parameter.setJetEta(jet.eta());
+      parameter.setRho( useRho ) ;
 
+//(Not yet ready from GT?)      const double JET_core_resolution_scale_factor 
+//(Not yet ready from GT?)	= (iSysType == sysType::JERup   ) ?     JER_ak4_resolutionSF .getScaleFactor(jer_param, Variation::UP)  
+//(Not yet ready from GT?)	: (    iSysType == sysType::JERdown ) ? JER_ak4_resolutionSF .getScaleFactor(jer_param, Variation::DOWN)  
+//(Not yet ready from GT?)	:                                       JER_ak4_resolutionSF .getScaleFactor(jer_param); ;
       const double JET_core_resolution_scale_factor 
-	= (iSysType == sysType::JERup   ) ?     JER_ak4_resolutionSF .getScaleFactor(jer_param, Variation::UP)  
-	: (    iSysType == sysType::JERdown ) ? JER_ak4_resolutionSF .getScaleFactor(jer_param, Variation::DOWN)  
-	:                                       JER_ak4_resolutionSF .getScaleFactor(jer_param); ;
-
-
+	= (iSysType == sysType::JERup   ) ?     JER_ak4_resolutionSF .getScaleFactor( parameter , Variation::UP)  
+	: (    iSysType == sysType::JERdown ) ? JER_ak4_resolutionSF .getScaleFactor( parameter , Variation::DOWN)  
+	:                                       JER_ak4_resolutionSF .getScaleFactor( parameter ); ;
+	
       reco::GenJet matched_genjet;
       if ( GenJet_Match(jet, genjets, matched_genjet, 0.4) ) { // = Failuer in either dR(jet-gen) or delta_Pt within 3 sigma.
+
 	rescaleFactor = max( 0.0,
 			     1.0 + ( JET_core_resolution_scale_factor - 1.0  ) * ( jet.pt() - matched_genjet.pt() ) / jet.pt() ) ;
 	// Reference of this equation : https://github.com/cms-sw/cmssw/blob/CMSSW_8_0_25/PhysicsTools/PatUtils/interface/SmearedJetProducerT.h#L237
@@ -530,11 +544,13 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 
 	const double resolution = JER_ak4_resolution.getResolution( parameter );
 
+	TRandom3 rnd ;
+	rnd.SetSeed((uint32_t)(jet.userInt("deterministicSeed")));
+
 	rescaleFactor = max( 0.0,
 			     1.0
-			     + JERRandumGenerator.Gaus( 0.0, resolution ) // mean = zero, sigma = resolution
-			     * sqrt( max ( 0.0 , - 1.0 + JET_core_resolution_scale_factor * JET_core_resolution_scale_factor) )
-			     );
+			     + rnd.Gaus( 0.0, resolution * sqrt( max ( 0.0 , - 1.0 + JET_core_resolution_scale_factor * JET_core_resolution_scale_factor) ) ) )
+			     ;
 			     //
 			     // equation from https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution?rev=15#CMSSW_7_6_X_and_CMSSW_8_0X
 			     // 
@@ -550,7 +566,7 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
       const double MIN_JET_ENERGY = 1e-2; //  https://github.com/cms-sw/cmssw/blob/CMSSW_8_0_25/PhysicsTools/PatUtils/interface/SmearedJetProducerT.h#L283
       if( jet.energy() * rescaleFactor < MIN_JET_ENERGY ){
 	rescaleFactor =  MIN_JET_ENERGY / jet.energy() ;
-	jet.scaleEnergy(  rescaleFactor );
+	//	jet.scaleEnergy(  rescaleFactor );
       }
 
       // - - - - - - - - - -      
