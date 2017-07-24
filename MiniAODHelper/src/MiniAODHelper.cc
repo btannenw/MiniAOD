@@ -419,6 +419,8 @@ pat::Jet MiniAODHelper::GetCorrectedJet(const pat::Jet& inputJet,
 
   double factor = 1.;
   pat::Jet outputJet = inputJet;
+  outputJet . addUserFloat( "OrigPt" , inputJet.pt());
+  outputJet . addUserFloat( "OrigPhi", inputJet.phi());
   ApplyJetEnergyCorrection(outputJet,
 			   factor,
 			   event,
