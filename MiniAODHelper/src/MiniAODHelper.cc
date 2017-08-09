@@ -528,7 +528,7 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	= (iSysType == sysType::JERup   ) ?     JER_ak4_resolutionSF .getScaleFactor( parameter , Variation::UP)  
 	: (    iSysType == sysType::JERdown ) ? JER_ak4_resolutionSF .getScaleFactor( parameter , Variation::DOWN)  
 	:                                       JER_ak4_resolutionSF .getScaleFactor( parameter ); ;
-	
+
       reco::GenJet matched_genjet;
       if ( GenJet_Match(jet, genjets, matched_genjet, 0.4) ) { // = Failuer in either dR(jet-gen) or delta_Pt within 3 sigma.
 
@@ -1180,10 +1180,15 @@ MiniAODHelper::isGoodElectron(const pat::Electron& iElectron, const float iMinPt
   case electronID::electron80XCutBasedL:
   case electronID::electron80XCutBasedM:
   case electronID::electron80XCutBasedT:
+
     passesID = PassElectron80XId(iElectron,iElectronID);
     passesKinematics = ((iElectron.pt() >= minElectronPt) && (fabs(iElectron.eta()) <= maxElectronEta) && !inCrack);
-    passesIso=0.15>=GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA,effAreaType::spring16);
+
+    //(Satoshi : remove ISO from ID)    passesIso=0.15>=GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA,effAreaType::spring16);
+    passesIso = true ;
+
     break;
+
   case electronID::electronNonTrigMVAid80:
     passesID = PassesNonTrigMVAid80(iElectron);
     passesKinematics = ((iElectron.pt() >= minElectronPt) && (fabs(iElectron.eta()) <= maxElectronEta) && !inCrack);
@@ -1654,7 +1659,7 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 
   double SCeta = (iElectron.superCluster().isAvailable()) ? iElectron.superCluster()->position().eta() : -99;
   double absSCeta = fabs(SCeta);
-  double relIso = GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA, effAreaType::spring16);
+//  double relIso = ; GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA, effAreaType::spring16);
 
   bool isEB = ( absSCeta < 1.479 );
 
@@ -1693,8 +1698,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 // 	       d0 < 0.035904 &&
 // 	       dZ < 0.075496 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.0994
+	       passConversionVeto
+	       // &&
+	       //	       relIso < 0.0994
 	       );
     }
     else{
@@ -1706,8 +1712,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 // 	       d0 < 0.035904 &&
 // 	       dZ < 0.075496 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.107
+	       passConversionVeto 
+	       //&&
+	       //relIso < 0.107
 	       );
     }
     break;
@@ -1721,8 +1728,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       d0 < 0.05 &&
 	       dZ < 0.10 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.0695
+	       passConversionVeto 
+	       //&&
+	       //relIso < 0.0695
 	       );
     }
     else{
@@ -1734,8 +1742,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       d0 < 0.10 &&
 	       dZ < 0.20 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.0821
+	       passConversionVeto 
+	       //&&
+	       //relIso < 0.0821
 	       );
     }
     break;
@@ -1749,8 +1758,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
  	       d0 < 0.05 &&
  	       dZ < 0.10 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.0588
+	       passConversionVeto 
+	       //&&
+	       //relIso < 0.0588
 	       );
     }
     else{
@@ -1762,8 +1772,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
  	       d0 < 0.10 &&
  	       dZ < 0.20 &&
 	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto &&
-	       relIso < 0.0571
+	       passConversionVeto 
+	       //&&
+	       //relIso < 0.0571
 	       );
     }
     break;
@@ -1777,8 +1788,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       expectedMissingInnerHits <= 2 &&
 	       passConversionVeto &&
  	       d0 < 0.05 &&
- 	       dZ < 0.10 &&
-	       relIso < 0.175
+ 	       dZ < 0.10 
+	       //&&
+	       //relIso < 0.175
 	       );
     }
     else{
@@ -1790,8 +1802,9 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
 	       expectedMissingInnerHits <= 3 &&
 	       passConversionVeto &&
  	       d0 < 0.10 &&
- 	       dZ < 0.20 &&
-	       relIso < 0.159
+ 	       dZ < 0.20 
+	       // &&
+	       // relIso < 0.159
 	       );
     }
     break;
