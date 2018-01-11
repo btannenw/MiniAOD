@@ -1681,7 +1681,7 @@ bool MiniAODHelper::PassElectron80XId(const pat::Electron& iElectron, const elec
   if( iElectron.gsfTrack().isAvailable() ){
     d0 = fabs(iElectron.gsfTrack()->dxy(vertex.position()));
     dZ = fabs(iElectron.gsfTrack()->dz(vertex.position()));
-    expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
   }
 
   bool passConversionVeto = ( iElectron.passConversionVeto() );
@@ -1847,7 +1847,7 @@ bool MiniAODHelper::PassElectronPhys14Id(const pat::Electron& iElectron, const e
   if( iElectron.gsfTrack().isAvailable() ){
     d0 = fabs(iElectron.gsfTrack()->dxy(vertex.position()));
     dZ = fabs(iElectron.gsfTrack()->dz(vertex.position()));
-    expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+    expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
   }
 
   bool passConversionVeto = ( iElectron.passConversionVeto() );
@@ -1969,7 +1969,7 @@ bool MiniAODHelper::PassElectronSpring15Id(const pat::Electron& iElectron, const
     if( iElectron.gsfTrack().isAvailable() ){
 	d0 = fabs(iElectron.gsfTrack()->dxy(vertex.position()));
 	dZ = fabs(iElectron.gsfTrack()->dz(vertex.position()));
-	expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+	expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
     }
 
     bool passConversionVeto = ( iElectron.passConversionVeto() );
