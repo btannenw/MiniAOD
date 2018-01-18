@@ -549,7 +549,8 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	const double resolution = JER_ak4_resolution.getResolution( parameter );
 
 	TRandom3 rnd ;
-	rnd.SetSeed((uint32_t)(jet.userInt("deterministicSeed")));
+	//	rnd.SetSeed((uint32_t)(jet.userInt("deterministicSeed")));
+	rnd.SetSeed( 1.0001  );
 
 	rescaleFactor = max( 0.0,
 			     1.0
