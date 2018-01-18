@@ -230,6 +230,8 @@ class MiniAODHelper{
 			       TLorentzVector * top =0 ,
 			       TLorentzVector * antitop =0 );
 
+  static bool WBosonDecaysProperly( const reco::Candidate *  W );
+
   bool GenJet_Match( const pat::Jet&, const edm::Handle<reco::GenJetCollection>&, reco::GenJet&, const double& );
   bool jetdPtMatched(const pat::Jet& inputJet, const reco::GenJet& genjet);
   double getJERfactor( const int, const double, const double, const double );

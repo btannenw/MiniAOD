@@ -2,6 +2,8 @@
 
 #include "FWCore/Utilities/interface/Exception.h"
 
+#include <assert.h>
+
 using namespace std;
 
 // Constructor
@@ -2488,32 +2490,63 @@ void MiniAODHelper::FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
   const reco::Candidate * W = topdecayobjects -> W ;
 
   // (case-1) In some MC, W boson decays but stays (example : W -> u+d+W)
-  // (case-2) In other MC, W boson decays after some step (example : W->W->u+d)
-  //  In order to handle both case,
-  //   - check if the W boson has fermion in ites daughter.
-  //      -> if so (=case 1), this is the W boson to see.
-  //      -> if not(=case 2), trackdown the W boson
-  bool W_boson_decays  = false ;
-  for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
-    if(       abs( W -> daughter( i ) -> pdgId() ) == 6
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 4
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 2
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 12
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 14
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 16
-	      || abs( W -> daughter( i ) -> pdgId() ) == 5
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 3
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 1
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 11
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 13
-	      ||  abs( W -> daughter( i ) -> pdgId() ) == 15 ){
-      W_boson_decays = true ;
-    } // end if
-  }// end for-loop
-  if( ! W_boson_decays ){
-    W = GetObjectJustBeforeDecay( W ) ;
-  }
+  // (case-2) In some MC, W boson decays after some step (example : W->W->u+d)
+  // (case-3) In other MC, W boson obtains extra particles (example : W->Wee (+/-))
+  //  In order to handle those cases,
+  //   - check if the W boson has a pair of expected decay products, otherwise keep following the W boson.
 
+//   bool W_boson_decays  = false ;
+//   for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
+//     if(       abs( W -> daughter( i ) -> pdgId() ) == 6
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 4
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 2
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 12
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 14
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 16
+// 	      || abs( W -> daughter( i ) -> pdgId() ) == 5
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 3
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 1
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 11
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 13
+// 	      ||  abs( W -> daughter( i ) -> pdgId() ) == 15 ){
+//       W_boson_decays = true ;
+//       std::cout <<"W boson decays true. pdgid = " << ( W -> daughter( i ) -> pdgId()  ) << std::endl ;
+//     } // end if
+//   }// end for-loop
+//   std::cout <<"test"<< std::endl ;
+//   if( ! W_boson_decays ){
+//     W = GetObjectJustBeforeDecay( W ) ;
+//     std::cout <<"W boson : GetObjectJustBeforeDecay  is called." << std::endl ; 
+//     for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
+//       std::cout << "in the loop, the daughters are "<< W -> daughter( i ) -> pdgId() << std::endl ; 
+//     }// end for-loop                                                                                                                                                                                                                                                                              
+//   }
+
+  while ( ! WBosonDecaysProperly( W ) ){
+
+    bool find_next_candidate = false ; 
+    for ( unsigned int i = 0 ; (! find_next_candidate) && ( i < W -> numberOfDaughters()  ) ; i++ ){
+
+      if( W -> daughter( i ) -> pdgId() == W -> pdgId() ){
+	find_next_candidate = true ; 
+	W = W -> daughter( i ) ; 
+      } 
+
+    }// end for-loop
+
+    if( ! find_next_candidate ){
+      std::cout <<"MiniAODHelper : [FATAL] Failed to track the W boson decay." << std::endl ; 
+      assert( false );
+    }
+    
+  } // end while-loop.
+
+
+  std::cout << "check w decay " << std::endl ; 
+  for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
+    std::cout << "outside ("<<  W -> numberOfDaughters() <<"), the daughters are "<< W -> daughter( i ) -> pdgId() << std::endl ; 
+  }// end for-loop                                                                                                                                                                                                                                                                              
+  
 
   for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
 
@@ -2570,6 +2603,44 @@ void MiniAODHelper::FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
 
   }// Tau loop
 
+}
+
+
+
+
+bool MiniAODHelper::WBosonDecaysProperly( const reco::Candidate *  W ){ 
+
+  bool up_quark = false ; 
+  bool down_quark = false ; 
+
+  bool up_lepton = false ; 
+  bool down_lepton = false ; 
+
+  for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
+
+    if( abs( W -> daughter( i ) -> pdgId() ) == 6
+	||  abs( W -> daughter( i ) -> pdgId() ) == 4
+	||  abs( W -> daughter( i ) -> pdgId() ) == 2 ) up_quark = true ; 
+      
+    if( abs( W -> daughter( i ) -> pdgId() ) == 12
+	||  abs( W -> daughter( i ) -> pdgId() ) == 14
+	||  abs( W -> daughter( i ) -> pdgId() ) == 16 ) up_lepton = true ; 
+
+    if( abs( W -> daughter( i ) -> pdgId() ) == 5
+	||  abs( W -> daughter( i ) -> pdgId() ) == 3
+	||  abs( W -> daughter( i ) -> pdgId() ) == 1 ) down_quark = true ;
+
+    if( abs( W -> daughter( i ) -> pdgId() ) == 11
+	||  abs( W -> daughter( i ) -> pdgId() ) == 13
+	||  abs( W -> daughter( i ) -> pdgId() ) == 15 ) down_lepton = true ; 
+
+  }// end for-loop
+  
+  if( up_quark && down_quark ) return true; 
+  if( up_lepton && down_lepton ) return true ; 
+
+  return false; 
+  
 }
 
 
