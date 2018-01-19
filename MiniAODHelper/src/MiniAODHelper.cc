@@ -2543,12 +2543,6 @@ void MiniAODHelper::FillTopQuarkDecayInfomration ( const reco::Candidate * c ,
   } // end while-loop.
 
 
-  std::cout << "check w decay " << std::endl ; 
-  for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
-    std::cout << "outside ("<<  W -> numberOfDaughters() <<"), the daughters are "<< W -> daughter( i ) -> pdgId() << std::endl ; 
-  }// end for-loop                                                                                                                                                                                                                                                                              
-  
-
   for ( unsigned int i = 0 ; i <  W -> numberOfDaughters(); i++ ){
 
     if(       abs( W -> daughter( i ) -> pdgId() ) == 6
