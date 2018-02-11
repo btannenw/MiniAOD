@@ -1538,6 +1538,17 @@ float MiniAODHelper::GetElectronRelIso(const pat::Electron& iElectron,const cone
 	    else if (Eta >= 2.2 && Eta < 2.3) EffArea = 0.1635;
 	    else if (Eta >= 2.3 && Eta < 2.4) EffArea = 0.1937;
 	    else if (Eta >= 2.4 && Eta < 5) EffArea = 0.2393;
+	  }else if( ieffAreaType==effAreaType::fall17 ){
+	    //	taken from  https://github.com/lsoffi/cmssw/blob/CMSSW_9_2_X_TnP/RecoEgamma/ElectronIdentification/data/Fall17/effAreaElectrons_cone03_pfNeuHadronsAndPhotons_92X.txt
+
+	    if (      Eta < 1.0   ){ EffArea = 0.1566; } 
+	    else if ( Eta < 1.479 ){ EffArea = 0.1626; } 
+	    else if ( Eta < 2.0   ){ EffArea = 0.1073; } 
+	    else if ( Eta < 2.2   ){ EffArea = 0.0854; } 
+	    else if ( Eta < 2.3   ){ EffArea = 0.1051; } 
+	    else if ( Eta < 2.4   ){ EffArea = 0.1204; } 
+	    else if ( Eta < 5.0   ){ EffArea = 0.1524; } 
+	    
 	  }
 
 	  if(!rhoIsSet) std::cout << " !! ERROR !! Trying to get rhoEffArea correction without setting rho" << std::endl;
