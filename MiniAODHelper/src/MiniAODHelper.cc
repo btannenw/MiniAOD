@@ -1202,8 +1202,10 @@ MiniAODHelper::isGoodElectron(const pat::Electron& iElectron, const float iMinPt
     passesKinematics = ((iElectron.pt() >= minElectronPt) && (fabs(iElectron.eta()) <= maxElectronEta) && !inCrack);
     passesIso = 0.15>=GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA,effAreaType::spring15);
     break;
-
-
+  default:
+    std::cout <<"[MiniAOD Helper] isGoodElectron() : your electron ID is not yet implemented yet." << std::endl ; 
+    assert(false);
+    break;
   }
 
   return (passesKinematics && passesIso && passesID);
@@ -1655,6 +1657,155 @@ bool MiniAODHelper::PassesCSV(const pat::Jet& iJet, const char iCSVworkingPoint)
   case '-':	return true;                            break;
   }
   return false;
+}
+
+
+
+bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const electronID::electronID iElectronID) const{
+
+
+  double SCeta = (iElectron.superCluster().isAvailable()) ? iElectron.superCluster()->position().eta() : -99;
+  double absSCeta = fabs(SCeta);
+//  double relIso = ; GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA, effAreaType::spring16);
+
+  bool isEB = ( absSCeta < 1.479 );
+
+  double full5x5_sigmaIetaIeta = iElectron.full5x5_sigmaIetaIeta();
+//   double dEtaIn = fabs( iElectron.deltaEtaSuperClusterTrackAtVtx() );
+  double dEtaInSeed = iElectron.superCluster().isNonnull() && iElectron.superCluster()->seed().isNonnull() ? iElectron.deltaEtaSuperClusterTrackAtVtx() - iElectron.superCluster()->eta() + iElectron.superCluster()->seed()->eta() : std::numeric_limits<float>::max();
+  double fabsdEtaInSeed=fabs(dEtaInSeed);
+  double dPhiIn = fabs( iElectron.deltaPhiSuperClusterTrackAtVtx() );
+  double hOverE = iElectron.hcalOverEcal();
+
+  double ooEmooP = -999;
+  if( iElectron.ecalEnergy() == 0 ) ooEmooP = 1e30;
+  else if( !std::isfinite(iElectron.ecalEnergy()) ) ooEmooP = 1e30;
+  else ooEmooP = fabs(1.0/iElectron.ecalEnergy() - iElectron.eSuperClusterOverP()/iElectron.ecalEnergy() );
+
+  double d0 = -999;
+  double dZ = -999;
+  double expectedMissingInnerHits = 999;
+  if( iElectron.gsfTrack().isAvailable() ){
+    d0 = fabs(iElectron.gsfTrack()->dxy(vertex.position()));
+    dZ = fabs(iElectron.gsfTrack()->dz(vertex.position()));
+    expectedMissingInnerHits = iElectron.gsfTrack()->hitPattern().numberOfAllHits(reco::HitPattern::MISSING_INNER_HITS);
+  }
+
+  const double energy = iElectron.superCluster()->energy();
+
+  bool passConversionVeto = ( iElectron.passConversionVeto() );
+
+
+  if( ! rhoIsSet ){
+    std::cout <<"MINIAODHelper.cc [fatal] 94x electron ID uses rho. You need to set Pho befor calling Electron ID function." << std::endl ;
+    assert(false);
+  }
+
+
+  bool pass = false;
+  switch(iElectronID){
+  case electronID::electron94XCutBasedL:
+    if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0105 &&
+	       fabsdEtaInSeed < 0.00387  &&
+	       dPhiIn < 0.0716 &&
+	       hOverE < 0.05 + 1.12 / energy + 0.0368 * useRho / energy  &&
+	       ooEmooP < 0.129  &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta < 0.0356 &&
+	       fabsdEtaInSeed < 0.0072 &&
+	       dPhiIn < 0.147 &&
+	       hOverE < 0.0414 + 0.5 / energy + 0.201 * useRho / energy  &&
+	       ooEmooP < 0.0875 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+    break;
+  case electronID::electron94XCutBasedM:
+    if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0105 &&
+	       fabsdEtaInSeed < 0.00365 &&
+	       dPhiIn < 0.0588 &&
+	       hOverE < 0.026 + 1.12 / energy + 0.0368 * useRho / energy  &&
+	       ooEmooP < 0.0327 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta < 0.0309 &&
+	       fabsdEtaInSeed < 0.00625 &&
+	       dPhiIn < 0.0355 &&
+	       hOverE < 0.026 + 0.5 / energy + 0.201 * useRho / energy  &&
+	       ooEmooP < 0.0335 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+    break;
+    case electronID::electron94XCutBasedT:
+    if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
+	       fabsdEtaInSeed < 0.00353 &&
+	       dPhiIn < 0.0499 &&
+	       hOverE < 0.026 + 1.12 / energy + 0.0368 * useRho / energy  &&
+	       ooEmooP < 0.0278 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta < 0.0305 &&
+	       fabsdEtaInSeed < 0.00567 &&
+	       dPhiIn <0.0165 &&
+	       hOverE < 0.026 + 0.5 / energy + 0.201 * useRho / energy  &&
+	       ooEmooP < 0.0158 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+    break;
+  case electronID::electron94XCutBasedV:
+    if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0128 &&
+	       fabsdEtaInSeed < 0.00523 &&
+	       dPhiIn < 0.159 &&
+	       hOverE < 0.05 + 1.12 / energy + 0.0368 * useRho / energy  &&
+	       ooEmooP < 0.193 &&
+	       expectedMissingInnerHits <= 2 &&
+	       passConversionVeto
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta <0.0445 &&
+	       fabsdEtaInSeed < 0.00984 &&
+	       dPhiIn <0.1573 &&
+	       hOverE < 0.05 + 0.5 / energy + 0.201 * useRho / energy  &&
+	       ooEmooP < 0.0962 &&
+	       expectedMissingInnerHits <= 3 &&
+	       passConversionVeto
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+    break;
+  default:
+    break;
+  }
+
+  return pass;
+
 }
 
 
