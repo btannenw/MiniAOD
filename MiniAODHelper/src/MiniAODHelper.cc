@@ -1281,10 +1281,10 @@ MiniAODHelper::isGoodJet(const pat::Jet& iJet, const float iMinPt, const float i
 
   if(iJetID!=jetID::none){
     loose = (
-		  iJet.neutralHadronEnergyFraction() < 0.99 &&
-		  iJet.chargedEmEnergyFraction() < 0.99 &&
-		  iJet.neutralEmEnergyFraction() < 0.99 &&
+		  iJet.neutralHadronEnergyFraction() < 0.90 &&
+		  iJet.neutralEmEnergyFraction() < 0.9  &&
 		  iJet.numberOfDaughters() > 1
+		  // (Not used in 2017? )  iJet.chargedEmEnergyFraction() < 0.99 &&
 		  );
 
     if( fabs(iJet.eta())<2.4 ){
