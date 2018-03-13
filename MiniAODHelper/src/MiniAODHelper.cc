@@ -302,10 +302,12 @@ MiniAODHelper::GetJECUncertainty(const pat::Jet& jet, const edm::EventSetup& iSe
 
 void MiniAODHelper::SetAK8JetCorrectorUncertainty(const edm::EventSetup& iSetup, 
 						  const std::string& uncertaintyLabel) {
+  { // Setting from DB : https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections?rev=140#JetCorApplication
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-  iSetup.get<JetCorrectionsRecord>().get("AK8PFchs",JetCorParColl);
+  iSetup.get<JetCorrectionsRecord>().get("AK8PFPuppi",JetCorParColl);
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)[uncertaintyLabel];
   ak8jecUnc_.reset(new JetCorrectionUncertainty(JetCorPar));
+  }
 }
 
 std::vector<pat::Muon>
@@ -600,10 +602,10 @@ MiniAODHelper::GetCorrectedAK8Jet(const pat::Jet& inputJet, const edm::Event& ev
   if( doJES ){
     double scale = 1.;
 
-    if (corrector) {
+    if ( ak8corrector ) {
       scale = ak8corrector->correction(outputJet );
     } else {
-       edm::LogError("MiniAODHelper") << "Trying to use Full Framework GetCorrectedJets without setting jet corrector!";
+       edm::LogError("MiniAODHelper") << "Trying to use Full Framework GetCorrectedJets without setting jet ak8-corrector!";
     }
 
     outputJet.scaleEnergy( scale*corrFactor );
