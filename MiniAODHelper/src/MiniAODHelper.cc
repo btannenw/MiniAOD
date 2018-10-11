@@ -31,7 +31,8 @@ MiniAODHelper::MiniAODHelper()
 
   { //  JER preparation
 
-    std::string JER_file =  string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt" ;
+    //std::string JER_file =  string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt" ;
+    std::string JER_file =  string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt" ;
     std::ifstream infile( JER_file);
     if( ! infile ){
       std::cerr << "Error: cannot open file(" << JER_file << ")" << endl;
@@ -92,10 +93,16 @@ void MiniAODHelper::SetJER_SF_Tool(const edm::EventSetup& iSetup){
 //  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor::get(iSetup, "AK4PFchs");
 //
 
-  JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt"  );
-  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_SF_AK4PFchs.txt" );
+  // ygg core
+  //JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt"  );
+  //JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_SF_AK4PFchs.txt" );
+  // BBT, 10-10-18
+  //std::cout << "string for resolution file: " << string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt"  << std::endl;
+  JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt"  );
+  //std::cout << "string for resolution SF file: " << string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_SF_AK4PFchs.txt" << std::endl;
+  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_SF_AK4PFchs.txt" );
 
-
+  std::cout << "Read JER input files" << std::endl;
 
 }
 
@@ -484,7 +491,7 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 
   if( doJES || doJER ) {
     CheckSetUp();
-
+    //cout << "+++ before anything" << totalCorrFactor << endl; 10-09-18
     /// JES
     if( doJES ){
       double scale = 1.;
@@ -509,10 +516,10 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	totalCorrFactor *= jecvar;
       }
     }
-
+    //cout << "+++ after JEC: " << totalCorrFactor << endl; //10-09-18
     /// JER
     if( doJER && !isData ){
-
+      //cout << "+++ in JER loop" << endl; // 10-09-18
       // - - - 
       // instruction from https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution?rev=15#CMSSW_7_6_X_and_CMSSW_8_0X
       // - - -
@@ -579,9 +586,11 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
       // - - - - - - - - - -      
       // - apply thre prepared rescale factor to the jet.
       // - - - - - - - - - -      
+      //cout << "+++ after JER: " << rescaleFactor << endl; // 10-09-18 BBT
 
       jet.scaleEnergy(  rescaleFactor );
       totalCorrFactor *= rescaleFactor ;
+
 
     }
 
@@ -730,7 +739,7 @@ std::vector<pat::Jet>
 MiniAODHelper::GetCorrectedJets(const std::vector<pat::Jet>& inputJets, const edm::Event& event, const edm::EventSetup& setup, const edm::Handle<reco::GenJetCollection>& genjets, const sysType::sysType iSysType, const bool& doJES, const bool& doJER, const float& corrFactor, const float& uncFactor){
 
   if( !doJES && !doJER ) return inputJets;
-
+  //cout << "+++ i got here" << endl;
   CheckSetUp();
 
   std::vector<pat::Jet> outputJets;
@@ -1500,8 +1509,10 @@ float MiniAODHelper::GetElectronRelIso(const pat::Electron& iElectron,const cone
 
   double correction = 9999.;
   double EffArea = 9999.;
-  double Eta = abs(iElectron.eta());
-
+  //double Eta = abs(iElectron.eta()); // comes with branch
+  double SCeta = (iElectron.superCluster().isAvailable()) ? iElectron.superCluster()->position().eta() : -99; // update from BBT 10-04-18
+  double Eta = fabs(SCeta); // update from BBT 10-04-18
+  //double rho = 
   double pfIsoCharged;
   double pfIsoNeutral;
   double pfIsoPUSubtracted;
@@ -1541,8 +1552,8 @@ float MiniAODHelper::GetElectronRelIso(const pat::Electron& iElectron,const cone
 	    else if (Eta >= 2.3 && Eta < 2.4) EffArea = 0.1937;
 	    else if (Eta >= 2.4 && Eta < 5) EffArea = 0.2393;
 	  }else if( ieffAreaType==effAreaType::fall17 ){
+	    // checked by BBT, 10-1-18
 	    //	taken from  https://github.com/lsoffi/cmssw/blob/CMSSW_9_2_X_TnP/RecoEgamma/ElectronIdentification/data/Fall17/effAreaElectrons_cone03_pfNeuHadronsAndPhotons_92X.txt
-
 	    if (      Eta < 1.0   ){ EffArea = 0.1566; } 
 	    else if ( Eta < 1.479 ){ EffArea = 0.1626; } 
 	    else if ( Eta < 2.0   ){ EffArea = 0.1073; } 
@@ -1550,10 +1561,10 @@ float MiniAODHelper::GetElectronRelIso(const pat::Electron& iElectron,const cone
 	    else if ( Eta < 2.3   ){ EffArea = 0.1051; } 
 	    else if ( Eta < 2.4   ){ EffArea = 0.1204; } 
 	    else if ( Eta < 5.0   ){ EffArea = 0.1524; } 
-	    
 	  }
 
 	  if(!rhoIsSet) std::cout << " !! ERROR !! Trying to get rhoEffArea correction without setting rho" << std::endl;
+	  //else          std::cout << " !! SUCCESS !! Got rhoEffArea correction after setting rho, rho = " << useRho << std::endl;
 	  correction = useRho*EffArea;
 	  break;
 	case corrType::deltaBeta:
@@ -1679,7 +1690,8 @@ bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const elec
 
   double SCeta = (iElectron.superCluster().isAvailable()) ? iElectron.superCluster()->position().eta() : -99;
   double absSCeta = fabs(SCeta);
-//  double relIso = ; GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA, effAreaType::spring16);
+  double relIso =  GetElectronRelIso(iElectron, coneSize::R03, corrType::rhoEA,effAreaType::fall17);
+  double pt = iElectron.pt();
 
   bool isEB = ( absSCeta < 1.479 );
 
@@ -1766,6 +1778,57 @@ bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const elec
     }
     break;
     case electronID::electron94XCutBasedT:
+      // coded by BBT on 10-09-18, 94X_V1
+    if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
+	       fabsdEtaInSeed < 0.00353 &&
+	       dPhiIn < 0.0499 &&
+	       hOverE < 0.026 + 1.12 / energy + 0.0368 * useRho / energy  &&
+	       relIso < 0.0361 &&
+	       ooEmooP < 0.0278 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta < 0.0305 &&
+	       fabsdEtaInSeed < 0.00567 &&
+	       dPhiIn <0.0165 &&
+	       hOverE < 0.026 + 0.5 / energy + 0.201 * useRho / energy  &&
+	       relIso < 0.094 &&
+	       ooEmooP < 0.0158 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+      // new version coded by BBT on 10-1-18, UPDATE 10-09-18: THIS IS 94X V2
+      /*if( isEB ){
+      pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
+	       fabsdEtaInSeed < 0.00255 &&
+	       dPhiIn < 0.022 &&
+	       hOverE < 0.026 + 1.15 / energy + 0.0324 * useRho / energy  &&
+	       relIso < 0.0287 + 0.506/pt &&
+	       ooEmooP < 0.159 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( full5x5_sigmaIetaIeta < 0.0353 &&
+	       fabsdEtaInSeed < 0.00501 &&
+	       dPhiIn <0.0236 &&
+	       hOverE < 0.0188 + 2.06 / energy + 0.183 * useRho / energy  &&
+	       relIso < 0.0445 + 0.963/pt &&
+	       ooEmooP < 0.0197 &&
+	       expectedMissingInnerHits <= 1 &&
+	       passConversionVeto 
+ 	       && d0 < 0.10 &&   dZ < 0.20
+	       );
+   }*/
+/* // Comes with Yggradsil checkout
     if( isEB ){
       pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
 	       fabsdEtaInSeed < 0.00353 &&
@@ -1787,7 +1850,7 @@ bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const elec
 	       passConversionVeto 
  	       && d0 < 0.10 &&   dZ < 0.20
 	       );
-    }
+    }*/
     break;
   case electronID::electron94XCutBasedV:
     if( isEB ){
