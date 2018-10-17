@@ -558,12 +558,14 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	const double resolution = JER_ak4_resolution.getResolution( parameter );
 
 	TRandom3 rnd ;
-	//	rnd.SetSeed((uint32_t)(jet.userInt("deterministicSeed")));
-	rnd.SetSeed( 1.0001  );
+	//int32_t seed = jet.userInt("deterministicSeed"); // BBT ,10-12-18 
+	//rnd.SetSeed((uint32_t)seed); // BBT, 10-12-18 
+	//rnd.SetSeed( 1.0001  );
 
 	rescaleFactor = max( 0.0,
 			     1.0
-			     + rnd.Gaus( 0.0, resolution * sqrt( max ( 0.0 , - 1.0 + JET_core_resolution_scale_factor * JET_core_resolution_scale_factor) ) ) )
+			     //+ rnd.Gaus( 0.0, resolution * sqrt( max ( 0.0 , - 1.0 + JET_core_resolution_scale_factor * JET_core_resolution_scale_factor) ) ) ) // ygg core
+			     + rnd.Gaus( 0.0, resolution ) * sqrt( max ( 0.0 , - 1.0 + JET_core_resolution_scale_factor * JET_core_resolution_scale_factor) ) ) // BBT 10-12-18
 			     ;
 			     //
 			     // equation from https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution?rev=15#CMSSW_7_6_X_and_CMSSW_8_0X
@@ -896,16 +898,18 @@ MiniAODHelper::GetSelectedBoostedJets(const std::vector<boosted::BoostedJet>& in
 bool MiniAODHelper::passesMuonPOGIdTight(const pat::Muon& iMuon){
 
     if( !iMuon.isGlobalMuon()) return false;
-    if( !iMuon.globalTrack().isAvailable() ) return false;
+    if(!iMuon.isPFMuon()) return false;
 
+    if( !iMuon.globalTrack().isAvailable() ) return false;
     bool passesGlobalTrackID = ( (iMuon.globalTrack()->normalizedChi2() < 10.)
 				 && (iMuon.globalTrack()->hitPattern().numberOfValidMuonHits() > 0)
 				 );
     if(!passesGlobalTrackID) return false;
 
-
+    if(iMuon.numberOfMatchedStations() <= 1) return false;
     if(!iMuon.muonBestTrack().isAvailable() )return false;
-    bool passesMuonBestTrackID = ( (fabs(iMuon.muonBestTrack()->dxy(vertex.position())) < 0.2)
+    //bool passesMuonBestTrackID = ( (fabs(iMuon.muonBestTrack()->dxy(vertex.position())) < 0.2)
+    bool passesMuonBestTrackID = ( (fabs(iMuon.dB()) < 0.2)
 				   && (fabs(iMuon.muonBestTrack()->dz(vertex.position())) < 0.5)
 				   );
     if(!passesMuonBestTrackID) return false;
@@ -918,9 +922,6 @@ bool MiniAODHelper::passesMuonPOGIdTight(const pat::Muon& iMuon){
     bool passesTrackID = (iMuon.track()->hitPattern().trackerLayersWithMeasurement() > 5);
     if(!passesTrackID) return false;
 
-    if(iMuon.numberOfMatchedStations() <= 1) return false;
-
-    if(!iMuon.isPFMuon()) return false;
 
     return true;
 
@@ -1777,38 +1778,40 @@ bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const elec
 	       );
     }
     break;
-    case electronID::electron94XCutBasedT:
-      // coded by BBT on 10-09-18, 94X_V1
+  case electronID::electron94XCutBasedT:
+    // coded by BBT on 10-09-18, 94X_V1
     if( isEB ){
-      pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
-	       fabsdEtaInSeed < 0.00353 &&
-	       dPhiIn < 0.0499 &&
-	       hOverE < 0.026 + 1.12 / energy + 0.0368 * useRho / energy  &&
-	       relIso < 0.0361 &&
-	       ooEmooP < 0.0278 &&
-	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto 
- 	       && d0 < 0.05 &&   dZ < 0.10 
+      pass = ( /*full5x5_sigmaIetaIeta < 0.0104 &&
+		 fabsdEtaInSeed < 0.00353 &&
+		 dPhiIn < 0.0499 &&
+		 hOverE < 0.026 + 1.12 / energy + 0.0368 * useRho / energy  &&
+		 relIso < 0.0361 &&
+		 ooEmooP < 0.0278 &&
+		 expectedMissingInnerHits <= 1 &&
+		 passConversionVeto */
+	      iElectron.electronID("cutBasedElectronID-Fall17-94X-V1-tight") // BBT 10-17-18 update
+	      && d0 < 0.05 &&   dZ < 0.10 
 	       );
     }
     else{
-      pass = ( full5x5_sigmaIetaIeta < 0.0305 &&
-	       fabsdEtaInSeed < 0.00567 &&
-	       dPhiIn <0.0165 &&
-	       hOverE < 0.026 + 0.5 / energy + 0.201 * useRho / energy  &&
-	       relIso < 0.094 &&
-	       ooEmooP < 0.0158 &&
-	       expectedMissingInnerHits <= 1 &&
-	       passConversionVeto 
- 	       && d0 < 0.10 &&   dZ < 0.20
+      pass = ( /*full5x5_sigmaIetaIeta < 0.0305 &&
+		 fabsdEtaInSeed < 0.00567 &&
+		 dPhiIn <0.0165 &&
+		 hOverE < 0.026 + 0.5 / energy + 0.201 * useRho / energy  &&
+		 relIso < 0.094 &&
+		 ooEmooP < 0.0158 &&
+		 expectedMissingInnerHits <= 1 &&
+		 passConversionVeto */
+	      iElectron.electronID("cutBasedElectronID-Fall17-94X-V1-tight") // BBT 10-17-18 update
+	      && d0 < 0.10 &&   dZ < 0.20
 	       );
     }
-      // new version coded by BBT on 10-1-18, UPDATE 10-09-18: THIS IS 94X V2
-      /*if( isEB ){
+    // new version coded by BBT on 10-1-18, UPDATE 10-09-18: THIS IS 94X V2
+    /*if( isEB ){
       pass = ( full5x5_sigmaIetaIeta < 0.0104 &&
-	       fabsdEtaInSeed < 0.00255 &&
-	       dPhiIn < 0.022 &&
-	       hOverE < 0.026 + 1.15 / energy + 0.0324 * useRho / energy  &&
+      fabsdEtaInSeed < 0.00255 &&
+      dPhiIn < 0.022 &&
+      hOverE < 0.026 + 1.15 / energy + 0.0324 * useRho / energy  &&
 	       relIso < 0.0287 + 0.506/pt &&
 	       ooEmooP < 0.159 &&
 	       expectedMissingInnerHits <= 1 &&
