@@ -558,7 +558,7 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	const double resolution = JER_ak4_resolution.getResolution( parameter );
 
 	TRandom3 rnd ;
-	//int32_t seed = jet.userInt("deterministicSeed"); // BBT ,10-12-18 
+	int32_t seed = jet.userInt("deterministicSeed"); // BBT ,10-12-18 
 	//rnd.SetSeed((uint32_t)seed); // BBT, 10-12-18 
 	//rnd.SetSeed( 1.0001  );
 
