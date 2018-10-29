@@ -426,12 +426,15 @@ pat::Jet MiniAODHelper::GetCorrectedJet(const pat::Jet& inputJet,
 					const bool doJES,
 					const bool doJER,
 					const float corrFactor,
-					const float uncFactor) {
+					const float uncFactor,
+					const bool isAK4) {
 
   double factor = 1.;
   pat::Jet outputJet = inputJet;
+  
   outputJet . addUserFloat( "OrigPt" , inputJet.pt());
   outputJet . addUserFloat( "OrigPhi", inputJet.phi());
+  //std::cout << "½½½ pre seed pull, jet pt: " <<  inputJet.pt() << " , jet eta: " << inputJet.eta() << " , GetCorrectedJet() isAK4 == " << isAK4 << std::endl;
   ApplyJetEnergyCorrection(outputJet,
 			   factor,
 			   event,
@@ -442,7 +445,8 @@ pat::Jet MiniAODHelper::GetCorrectedJet(const pat::Jet& inputJet,
 			   doJER,
 			   true, // addUserFloats
 			   corrFactor,
-			   uncFactor);
+			   uncFactor,
+			   isAK4);
 
   return outputJet;
 }
@@ -456,7 +460,7 @@ float MiniAODHelper::GetJetCorrectionFactor(const pat::Jet& inputJet,
 					    const bool doJES,
 					    const bool doJER,
 					    const float corrFactor,
-					    const float uncFactor) {
+					    const float uncFactor){
 
   double factor = 1.;
   pat::Jet outputJet = inputJet;
@@ -486,7 +490,8 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 					     const bool doJER,
 					     const bool addUserFloats,
 					     const float corrFactor,
-					     const float uncFactor) {
+					     const float uncFactor,
+					     const bool isAK4) {
   totalCorrFactor = 1.;
 
   if( doJES || doJER ) {
@@ -556,9 +561,13 @@ void MiniAODHelper::ApplyJetEnergyCorrection(pat::Jet& jet,
 	parameter.setRho( useRho ) ; 
 
 	const double resolution = JER_ak4_resolution.getResolution( parameter );
-
 	TRandom3 rnd ;
-	int32_t seed = jet.userInt("deterministicSeed"); // BBT ,10-12-18 
+	if(isAK4){
+	  int32_t seed = jet.userInt("deterministicSeed"); // BBT, 10-29-18 
+	  rnd.SetSeed((uint32_t)seed); // BBT, 10-29-18 
+	  //std::cout << " ¼¼¼ userDeterministicSeed: " << jet.userInt("deterministicSeed") << std::endl;
+	}
+	//int32_t seed = userDeterministicSeed; // BBT ,10-29-18 
 	//rnd.SetSeed((uint32_t)seed); // BBT, 10-12-18 
 	//rnd.SetSeed( 1.0001  );
 
@@ -738,16 +747,16 @@ MiniAODHelper::GetAK8JetCorrectionFactor(const pat::Jet& inputJet, const edm::Ev
 
 
 std::vector<pat::Jet>
-MiniAODHelper::GetCorrectedJets(const std::vector<pat::Jet>& inputJets, const edm::Event& event, const edm::EventSetup& setup, const edm::Handle<reco::GenJetCollection>& genjets, const sysType::sysType iSysType, const bool& doJES, const bool& doJER, const float& corrFactor, const float& uncFactor){
+MiniAODHelper::GetCorrectedJets(const std::vector<pat::Jet>& inputJets, const edm::Event& event, const edm::EventSetup& setup, const edm::Handle<reco::GenJetCollection>& genjets, const sysType::sysType iSysType, const bool& doJES, const bool& doJER, const bool& isAK4, const float& corrFactor, const float& uncFactor){
 
   if( !doJES && !doJER ) return inputJets;
-  //cout << "+++ i got here" << endl;
+  //cout << "+++ GetCorrectedJets() , isAK4 == " << isAK4 << endl;
   CheckSetUp();
 
   std::vector<pat::Jet> outputJets;
 
   for( std::vector<pat::Jet>::const_iterator it = inputJets.begin(), ed = inputJets.end(); it != ed; ++it ){
-    outputJets.push_back(GetCorrectedJet(*it,event,setup, genjets, iSysType,doJES,doJER,corrFactor,uncFactor));
+    outputJets.push_back(GetCorrectedJet(*it,event,setup, genjets, iSysType,doJES,doJER,corrFactor,uncFactor, isAK4));
   }
 
   return outputJets;
