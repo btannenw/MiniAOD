@@ -96,12 +96,13 @@ void MiniAODHelper::SetJER_SF_Tool(const edm::EventSetup& iSetup){
   // ygg core
   //JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_PtResolution_AK4PFchs.txt"  );
   //JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Spring16_25nsV10_MC_SF_AK4PFchs.txt" );
-  // BBT, 10-10-18
+ 
   //std::cout << "string for resolution file: " << string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt"  << std::endl;
-  JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt"  );
+  //JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_PtResolution_AK4PFchs.txt"  );  // BBT, 10-10-18
+  JER_ak4_resolution = JME::JetResolution(              string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Fall17_V3_MC_PtResolution_AK4PFchs.txt"  );  // BBT, 12-03-18
   //std::cout << "string for resolution SF file: " << string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_SF_AK4PFchs.txt" << std::endl;
-  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_SF_AK4PFchs.txt" );
-
+  //JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Summer16_25nsV1_MC_SF_AK4PFchs.txt" );  // BBT, 10-10-18
+  JER_ak4_resolutionSF = JME::JetResolutionScaleFactor( string(getenv("CMSSW_BASE")) + "/src/MiniAOD/MiniAODHelper/data/Fall17_V3_MC_SF_AK4PFchs.txt" );  // BBT, 12-03-18
   std::cout << "Read JER input files" << std::endl;
 
 }
@@ -1812,6 +1813,18 @@ bool MiniAODHelper::PassElectron94XId(const pat::Electron& iElectron, const elec
 		 expectedMissingInnerHits <= 1 &&
 		 passConversionVeto */
 	      iElectron.electronID("cutBasedElectronID-Fall17-94X-V1-tight") // BBT 10-17-18 update
+	      && d0 < 0.10 &&   dZ < 0.20
+	       );
+    }
+  case electronID::electron94XCutBasedT_V2:
+    // coded by BBT on 12-03-18, 94X_V2
+    if( isEB ){
+      pass = ( iElectron.electronID("cutBasedElectronID-Fall17-94X-V2-tight") // BBT 12-03-18 update
+	      && d0 < 0.05 &&   dZ < 0.10 
+	       );
+    }
+    else{
+      pass = ( iElectron.electronID("cutBasedElectronID-Fall17-94X-V2-tight") // BBT 12-03-18 update
 	      && d0 < 0.10 &&   dZ < 0.20
 	       );
     }
