@@ -122,7 +122,7 @@ namespace electronID{
       electronEndOf15MVA80, electronEndOf15MVA90, electronEndOf15MVA80iso0p1, electronEndOf15MVA80iso0p15, electronEndOf15MVA90iso0p1, electronEndOf15MVA90iso0p15,
       electron80XCutBasedL,electron80XCutBasedM,electron80XCutBasedT,electron80XCutBasedV,electronNonTrigMVAid90,electronNonTrigMVAid80
       ,
-      electron94XCutBasedL,electron94XCutBasedM,electron94XCutBasedT,electron94XCutBasedV,electron94XCutBasedT_V2 
+      electron94XCutBasedL,electron94XCutBasedM,electron94XCutBasedT,electron94XCutBasedV//,electron94XCutBasedT_V2 
    };
 }
 namespace hdecayType{	enum hdecayType{ hbb, hcc, hww, hzz, htt, hgg, hjj, hzg }; }
